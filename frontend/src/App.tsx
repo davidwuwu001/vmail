@@ -1,15 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Home } from "./pages/Home.tsx";
-// MailDetail 组件不再作为独立页面，因此移除其路由
-// import { MailDetail } from './pages/MailDetail.tsx';
-// import { About } from './pages/About.tsx';  // 移除
-// import { Privacy } from './pages/Privacy.tsx'; // 移除
-// import { Terms } from './pages/Terms.tsx'; // 移除
+import { Auth } from "./pages/Auth.tsx";
+import { Dashboard } from "./pages/Dashboard.tsx";
 import { ConfigContext, AppConfig } from "./hooks/useConfig.ts";
 import { Layout } from "./Layout.tsx";
+import { isAuthenticated } from "./services/authApi.ts";
 
 // 创建一个新的 QueryClient 实例，用于TanStack Query的数据缓存和管理
 const queryClient = new QueryClient();
@@ -41,11 +39,22 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* 使用 Layout 组件作为所有页面的布局框架 */}
+            {/* 公开路由 */}
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* 受保护的路由 */}
+            <Route 
+              path="/dashboard" 
+              element={isAuthenticated() ? <Dashboard /> : <Navigate to="/auth" />} 
+            />
+            
+            {/* 旧版首页（保留兼容） */}
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
-              {/* 移除 /mails/:id, /about, /privacy, /terms 路由 */}
             </Route>
+            
+            {/* 默认重定向 */}
+            <Route path="*" element={<Navigate to={isAuthenticated() ? "/dashboard" : "/"} />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
