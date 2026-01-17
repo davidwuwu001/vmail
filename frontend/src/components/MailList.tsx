@@ -119,26 +119,26 @@ export function MailList({
         />
         <div
           onClick={() => onSelectEmail(email)}
-          className="cursor-pointer flex-1 flex flex-col items-start gap-2 rounded-lg border border-zinc-600 p-3 text-left text-sm transition-all hover:bg-zinc-700">
+          className="cursor-pointer flex-1 flex flex-col items-start gap-2 rounded-lg border border-zinc-600 bg-zinc-800/50 p-3 text-left text-sm transition-all hover:bg-zinc-700 text-white">
           <div className="flex w-full flex-col gap-1">
             <div className="flex items-center">
               <div className="flex items-center gap-2">
                 {/* feat: 在用户名后显示邮箱地址 */}
-                <div className="font-semibold">
+                <div className="font-semibold text-white">
                   {email.from?.name || email.messageFrom}{" "}
                   {email.from?.address && `(${email.from.address})`}
                 </div>
               </div>
-              <div className={"ml-auto text-xs"}>
+              <div className={"ml-auto text-xs text-gray-400"}>
                 {formatDistanceToNow(new Date(email.date || email.createdAt), {
                   addSuffix: true,
                   locale: zhCN,
                 })}
               </div>
             </div>
-            <div className="text-xs font-medium">{email.subject}</div>
+            <div className="text-xs font-medium text-gray-300">{email.subject}</div>
           </div>
-          <div className="line-clamp-2 text-xs text-zinc-300 font-normal w-full">
+          <div className="line-clamp-2 text-xs text-zinc-400 font-normal w-full">
             {(email.text || email.html || "").substring(0, 300)}
           </div>
         </div>
