@@ -26,10 +26,6 @@ TURNSTILE_SECRET = "0x4AAAAAACM_jVtDrktz_XnG0HgtF0Rna0Q"
 [triggers]
 crons = ["0 * * * *"] # 每小时运行一次清理任务
 
-# Email Worker 绑定（接收邮件）
-[email]
-name = "vmail"
-
 # 构建配置
 [build]
 command = "pnpm run build"
