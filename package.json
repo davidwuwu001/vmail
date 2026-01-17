@@ -4,6 +4,9 @@
   "private": true,
   "packageManager": "pnpm@9.1.0",
   "description": "使用 Cloudflare email worker 实现的临时电子邮件服务",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "pnpm --filter frontend run build",
     "deploy": "pnpm build && wrangler deploy",
