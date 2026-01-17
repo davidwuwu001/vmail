@@ -42,19 +42,25 @@ function App() {
             {/* 公开路由 */}
             <Route path="/auth" element={<Auth />} />
             
-            {/* 受保护的路由 */}
+            {/* 主路由：Dashboard（需要登录） */}
             <Route 
-              path="/dashboard" 
+              path="/" 
               element={isAuthenticated() ? <Dashboard /> : <Navigate to="/auth" />} 
             />
             
-            {/* 旧版首页（保留兼容） */}
+            {/* 兼容旧路由 */}
+            <Route 
+              path="/dashboard" 
+              element={<Navigate to="/" replace />} 
+            />
+            
+            {/* 旧版首页（保留兼容，但需要通过特定路径访问） */}
             <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
+              <Route path="/legacy" element={<Home />} />
             </Route>
             
             {/* 默认重定向 */}
-            <Route path="*" element={<Navigate to={isAuthenticated() ? "/dashboard" : "/"} />} />
+            <Route path="*" element={<Navigate to={isAuthenticated() ? "/" : "/auth"} />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
