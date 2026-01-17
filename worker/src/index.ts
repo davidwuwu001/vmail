@@ -275,8 +275,17 @@ export default {
     if (url.pathname.startsWith('/api/') || url.pathname === '/config') {
       return app.fetch(request, env, ctx);
     }
+    
     // 静态资源和其他请求由 Pages 的静态资源处理器处理
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    
+    // 如果是 404 且不是静态资源文件，返回 index.html 以支持 SPA 路由
+    if (response.status === 404 && !url.pathname.includes('.')) {
+      const indexRequest = new Request(new URL('/', request.url), request);
+      return env.ASSETS.fetch(indexRequest);
+    }
+    
+    return response;
   },
 
   // 定时任务 (清理过期邮件和邮箱)
