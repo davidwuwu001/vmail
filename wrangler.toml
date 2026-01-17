@@ -17,7 +17,7 @@ migrations_dir = "worker/drizzle"
 
 # 定义环境变量和密钥
 [vars]
-EMAIL_DOMAIN = "vmail.dawuls.com"
+EMAIL_DOMAIN = "dawuls.com"
 TURNSTILE_KEY = "0x4AAAAAACM_jYKkxDfVfhC7"
 COOKIES_SECRET = "ANqEYzCuAoftWf5wbLvN2qrETigHwZx/da/B1D7dFCY="
 TURNSTILE_SECRET = "0x4AAAAAACM_jVtDrktz_XnG0HgtF0Rna0Q"
