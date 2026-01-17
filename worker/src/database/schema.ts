@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import * as z from "zod";
 
 // 定义 Header 类型，用于存储邮件头信息
@@ -17,6 +18,7 @@ export type Email = typeof emails.$inferSelect;
 // 使用 drizzle-orm 定义 emails 表的结构
 export const emails = sqliteTable("emails", {
   id: text("id").primaryKey(),
+  mailboxId: text("mailbox_id"),
   messageFrom: text("message_from").notNull(),
   messageTo: text("message_to").notNull(),
   headers: text("headers", { mode: "json" }).$type<Header[]>().notNull(),
@@ -58,3 +60,48 @@ export const insertEmailSchema = createInsertSchema(emails, {
 
 // 定义 InsertEmail 类型，从 Zod schema 推断
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
+
+// 用户表
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+// 邮箱表
+export const mailboxes = sqliteTable("mailboxes", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  address: text("address").notNull().unique(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+export type Mailbox = typeof mailboxes.$inferSelect;
+export type InsertMailbox = typeof mailboxes.$inferInsert;
+
+// 定义表关系
+export const usersRelations = relations(users, ({ many }) => ({
+  mailboxes: many(mailboxes),
+}));
+
+export const mailboxesRelations = relations(mailboxes, ({ one, many }) => ({
+  user: one(users, {
+    fields: [mailboxes.userId],
+    references: [users.id],
+  }),
+  emails: many(emails),
+}));
+
+export const emailsRelations = relations(emails, ({ one }) => ({
+  mailbox: one(mailboxes, {
+    fields: [emails.mailboxId],
+    references: [mailboxes.id],
+  }),
+}));

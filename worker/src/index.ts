@@ -2,13 +2,24 @@ import { Hono } from 'hono';
 import { serveStatic } from 'hono/cloudflare-workers';
 import { cors } from 'hono/cors';
 // 导入数据库相关的模块
-import { deleteEmails, findEmailById, getEmailsByMessageTo, insertEmail, deleteExpiredEmails } from './database/dao';
+import { 
+  deleteEmails, 
+  findEmailById, 
+  getEmailsByMessageTo, 
+  insertEmail, 
+  deleteExpiredEmails,
+  deleteExpiredMailboxes,
+  findMailboxByAddress,
+} from './database/dao';
 import { getD1DB } from './database/db';
 import { InsertEmail, insertEmailSchema } from './database/schema';
 import { nanoid } from 'nanoid/non-secure';
 import PostalMime from 'postal-mime';
 // 导入加解密工具函数
 import { decrypt } from './utils';
+// 导入新的路由
+import authRoutes from './routes/auth';
+import mailboxesRoutes from './routes/mailboxes';
 
 
 // 定义 Cloudflare 绑定和环境变量的类型
@@ -82,6 +93,12 @@ const turnstile = async (c, next) => {
 
 // API 路由组
 const api = app.basePath('/api');
+
+// 挂载认证路由
+api.route('/auth', authRoutes);
+
+// 挂载邮箱路由
+api.route('/mailboxes', mailboxesRoutes);
 
 // feat: 新增一个专门用于人机验证的接口。
 // 前端应在生成邮箱地址前先调用此接口。
@@ -206,10 +223,14 @@ export default {
       const mail = await new PostalMime().parse(raw);
       const now = new Date();
 
+      // 查找对应的邮箱
+      const mailbox = await findMailboxByAddress(db, message.to);
+      
       // **关键修复**：显式地从解析结果中映射字段，而不是使用对象展开(...)
       // 这样可以避免属性覆盖和类型不匹配的问题
       const newEmail: InsertEmail = {
         id: nanoid(),
+        mailboxId: mailbox?.id || null, // 关联到邮箱（如果存在）
         messageFrom: message.from,
         messageTo: message.to,
         headers: mail.headers || [], // 确保 headers 存在
@@ -258,12 +279,18 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // 定时任务 (清理过期邮件)
+  // 定时任务 (清理过期邮件和邮箱)
   async scheduled(event, env, ctx) {
       const db = getD1DB(env.DB);
-      // 修复：将清理时间从1小时修改为24小时（1天）
+      const now = new Date();
+      
+      // 清理过期邮箱及其邮件
+      const mailboxResult = await deleteExpiredMailboxes(db, now);
+      console.log(`已清理 ${mailboxResult.count} 个过期邮箱`);
+      
+      // 清理24小时前的孤立邮件（没有关联邮箱的邮件）
       const oneDayAgo = new Date(Date.now() - 1000 * 60 * 60 * 24);
-      await deleteExpiredEmails(db, oneDayAgo);
-      console.log(`已清理 ${oneDayAgo.toISOString()} 之前的过期邮件`); // 添加日志
+      const emailResult = await deleteExpiredEmails(db, oneDayAgo);
+      console.log(`已清理 ${emailResult.count} 封过期邮件`);
   },
 };
